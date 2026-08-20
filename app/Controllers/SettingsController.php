@@ -127,10 +127,17 @@ class SettingsController extends BaseController
 
         $rows = [];
         foreach ($registry as $name => $node) {
+            $protocol     = $settings->get('Nodes.protocol', $name) ?? 'FTP';
             $rows[$name] = [
+                // Export-only marker, read by nothing on import (see
+                // invalidImportRow()) - 'protocol' below is the field that
+                // actually round-trips, this just makes the active
+                // connection type visible at a glance without hunting
+                // through 11 flat fields, first-child-wins JSON ordering.
+                'selected' => $protocol,
                 'type'     => $settings->get('Nodes.type', $name) ?? $node['type'],
                 'url'      => $settings->get('Nodes.url', $name) ?? $node['baseURL'],
-                'protocol' => $settings->get('Nodes.protocol', $name) ?? 'FTP',
+                'protocol' => $protocol,
                 'ftpHost'  => $settings->get('Nodes.ftpHost', $name) ?? '',
                 'ftpPort'  => $settings->get('Nodes.ftpPort', $name) ?? '',
                 'ftpUser'  => $settings->get('Nodes.ftpUser', $name) ?? '',
@@ -167,7 +174,11 @@ class SettingsController extends BaseController
 
         $rows = [];
         foreach ($registry as $name => $node) {
-            $row = ['type' => $settings->get('Databases.type', $name) ?? 'mysql'];
+            $type = $settings->get('Databases.type', $name) ?? 'mysql';
+            // Export-only marker, same reasoning as nodeRows()' own
+            // 'selected' - the active driver, visible at a glance instead
+            // of hunting through 25 flat credential fields across 5 drivers.
+            $row  = ['selected' => $type, 'type' => $type];
             foreach (self::DATABASE_PROPS as $prop) {
                 if ($prop === 'type') {
                     continue;
@@ -476,6 +487,24 @@ class SettingsController extends BaseController
         }
 
         $known = class_exists(\AdGo\Cluster\Cluster::class) ? (new \AdGo\Cluster\Cluster())->allNodes() : [];
+
+        // 'selected' (see nodeRows()/databaseRows()) is export-only, a
+        // human-readable summary of 'protocol'/'type' below it - never a
+        // real prop, so it's dropped before validation/writing rather than
+        // added to NODE_PROPS/DATABASE_PROPS, which would let it be set
+        // independently of the field it's just mirroring.
+        foreach ($decoded['nodes'] as &$nodeProps) {
+            if (is_array($nodeProps)) {
+                unset($nodeProps['selected']);
+            }
+        }
+        unset($nodeProps);
+        foreach ($decoded['databases'] as &$dbProps) {
+            if (is_array($dbProps)) {
+                unset($dbProps['selected']);
+            }
+        }
+        unset($dbProps);
 
         foreach ($decoded['nodes'] as $node => $props) {
             if ($error = $this->invalidImportRow((string) $node, $props, $known, self::NODE_PROPS)) {
