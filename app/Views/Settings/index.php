@@ -66,7 +66,6 @@
                 <table class="table card-table table-vcenter" id="settings-nodes"
                        data-endpoint="<?= url_to('SettingsController::updateNode') ?>"
                        data-test-endpoint="<?= url_to('SettingsController::testNode') ?>"
-                       data-test-cron-endpoint="<?= url_to('SettingsController::testCron') ?>"
                        data-test-strings="<?= esc(json_encode(['ok' => lang('App.connTestOk'), 'failed' => lang('App.connTestFailed'), 'waiting' => lang('App.connTestWaiting'), 'timeout' => lang('App.connTestTimeout')]), 'attr') ?>">
                     <thead>
                         <tr>
@@ -98,13 +97,6 @@
                             data-ssh-host="<?= esc($node['sshHost']) ?>" data-ssh-port="<?= esc($node['sshPort']) ?>" data-ssh-user="<?= esc($node['sshUser']) ?>" data-ssh-pass="<?= esc($node['sshPass']) ?>">
                             <td>
                                 <span class="badge bg-blue-lt" style="cursor:pointer" data-test-conn="<?= esc($name) ?>"><?= esc($name) ?></span>
-                                <!-- Cron has no protocol dropdown of its own (see
-                                     SettingsController::testCron()'s own comment) -
-                                     always tests Nodes.ssh*, a second small badge
-                                     rather than folding it into the Protocol swap
-                                     above, which is specifically about FILE deploy
-                                     credentials. -->
-                                <span class="badge bg-secondary-lt" style="cursor:pointer" data-test-cron="<?= esc($name) ?>" title="<?= esc(lang('App.testCronTitle')) ?>"><?= lang('App.testCron') ?></span>
                             </td>
                             <td>
                                 <select class="form-select form-select-sm" data-node="<?= esc($name) ?>" data-prop="type">

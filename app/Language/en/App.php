@@ -110,8 +110,6 @@ return [
     'connTestFailed' => 'Connection failed',
     'connTestWaiting' => 'Waiting for {0} to check in (it has no direct connection, testing on its own next pull cycle)...',
     'connTestTimeout' => 'Timed out waiting for {0} to check in - it may be offline or its pull cycle has not run yet.',
-    'testCron' => 'cron',
-    'testCronTitle' => 'Test crontab read/write access over this node\'s SSH credentials',
     'close' => 'Close',
     'saveFailed' => 'Could not save - check the fields below.',
     'saveFailedNetwork' => 'Could not save - a network or server error occurred. Please try again.',

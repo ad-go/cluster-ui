@@ -302,39 +302,6 @@ class SettingsController extends BaseController
         ]);
     }
 
-    // Second, separate badge on the Nodes table (see settings.js) - cron
-    // has no protocol dropdown of its own (there's no FTP/FTPS equivalent
-    // for "manage this account's crontab"), so this always uses the row's
-    // `Nodes.ssh*` credential set regardless of which protocol is
-    // currently selected for FILE deploys (a node deployed over FTPS can
-    // still very much have real SSH access worth testing separately -
-    // h1q/beta/upz/bak/res all do, see CI4cluster.asc). Same
-    // dispatchTest() hand-off as testDatabase()/testNode() above.
-    public function testCron(): ResponseInterface
-    {
-        if (! (auth()->user()?->inGroup('superadmin'))) {
-            return $this->response->setStatusCode(403)->setJSON(['ok' => false]);
-        }
-
-        $node  = (string) $this->request->getPost('node');
-        $known = class_exists(\AdGo\Cluster\Cluster::class) ? (new \AdGo\Cluster\Cluster())->allNodes() : [];
-        if (! array_key_exists($node, $known)) {
-            return $this->response->setStatusCode(422)->setJSON(['ok' => false, 'error' => 'Unknown node.']);
-        }
-        if (! class_exists(\AdGo\Cluster\CronConnectionChecker::class)) {
-            return $this->response->setStatusCode(503)->setJSON(['ok' => false, 'error' => 'ad-go/cluster is not installed.']);
-        }
-
-        $settings = service('settings');
-
-        return $this->dispatchTest('cron', $node, [
-            'host' => (string) ($settings->get('Nodes.sshHost', $node) ?? ''),
-            'port' => (string) ($settings->get('Nodes.sshPort', $node) ?? ''),
-            'user' => (string) ($settings->get('Nodes.sshUser', $node) ?? ''),
-            'pass' => (string) ($settings->get('Nodes.sshPass', $node) ?? ''),
-        ]);
-    }
-
     /**
      * Shared by testDatabase()/testNode() above - decides HOW to actually
      * run a connection test for $node and returns the CI4 JSON response

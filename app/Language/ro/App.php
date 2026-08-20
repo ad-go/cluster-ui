@@ -110,8 +110,6 @@ return [
     'connTestFailed' => 'Conexiune eșuată',
     'connTestWaiting' => 'Se așteaptă ca {0} să se conecteze (nu are conexiune directă, testează la propriul ciclu de pull)...',
     'connTestTimeout' => 'Timeout așteptând {0} - poate fi offline sau ciclul lui de pull încă nu a rulat.',
-    'testCron' => 'cron',
-    'testCronTitle' => 'Testează accesul de citire/scriere la crontab, prin credențialele SSH ale acestui nod',
     'close' => 'Închide',
     'saveFailed' => 'Nu s-a putut salva - verifică câmpurile de mai jos.',
     'saveFailedNetwork' => 'Nu s-a putut salva - a apărut o eroare de rețea sau de server. Încearcă din nou.',

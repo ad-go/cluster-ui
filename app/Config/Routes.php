@@ -30,7 +30,6 @@ $routes->get('settings', 'SettingsController::index', ['filter' => 'session']);
 $routes->post('settings', 'SettingsController::update', ['filter' => 'session']);
 $routes->post('settings/nodes', 'SettingsController::updateNode', ['filter' => 'session']);
 $routes->post('settings/nodes/test', 'SettingsController::testNode', ['filter' => 'session']);
-$routes->post('settings/nodes/test-cron', 'SettingsController::testCron', ['filter' => 'session']);
 $routes->get('settings/test-result', 'SettingsController::testResult', ['filter' => 'session']);
 $routes->post('settings/databases', 'SettingsController::updateDatabase', ['filter' => 'session']);
 $routes->post('settings/databases/test', 'SettingsController::testDatabase', ['filter' => 'session']);

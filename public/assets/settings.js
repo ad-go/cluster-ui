@@ -195,23 +195,14 @@
         }, CONN_TEST_POLL_MS);
     }
 
-    // selector/endpointKey default to the node-name badge / main test
-    // endpoint (Nodes and Databases tables both only have one kind of
-    // badge) - the Nodes table's second "cron" badge (see index.php,
-    // testCron() has no protocol dropdown of its own to hang off) passes
-    // its own selector/endpointKey so it reuses every bit of this
-    // function - modal, polling, waiting/timeout strings - instead of a
-    // near-duplicate second binder.
-    function bindTestModal(table, summaryFn, selector, endpointKey) {
+    function bindTestModal(table, summaryFn) {
         if (!table || !connModalEl) return;
-        selector = selector || '[data-test-conn]';
-        endpointKey = endpointKey || 'testEndpoint';
-        var testEndpoint = table.dataset[endpointKey];
+        var testEndpoint = table.dataset.testEndpoint;
         var testStrings = JSON.parse(table.dataset.testStrings || '{}');
 
-        table.querySelectorAll(selector).forEach(function (badge) {
+        table.querySelectorAll('[data-test-conn]').forEach(function (badge) {
             badge.addEventListener('click', function () {
-                var node = badge.dataset.testConn || badge.dataset.testCron;
+                var node = badge.dataset.testConn;
                 stopPolling();
                 connModalTitle.textContent = node;
                 connModalLoading.classList.remove('d-none');
@@ -256,9 +247,6 @@
     bindTestModal(document.getElementById('settings-nodes'), function (data) {
         return data.protocol + (data.detail ? ' - ' + data.detail : '') + ' (' + data.ms + 'ms)';
     });
-    bindTestModal(document.getElementById('settings-nodes'), function (data) {
-        return data.detail ? data.detail + ' (' + data.ms + 'ms)' : (data.ms + 'ms');
-    }, '[data-test-cron]', 'testCronEndpoint');
 
     ['conn-test-modal-close', 'conn-test-modal-ok'].forEach(function (id) {
         var el = document.getElementById(id);
