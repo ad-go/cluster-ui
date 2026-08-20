@@ -26,7 +26,12 @@ app, built on [Tabler](https://tabler.io/) and [Apache ECharts](https://echarts.
 
 ## Requirements
 
-- A CodeIgniter 4 app with `codeigniter4/shield` and `codeigniter4/settings` installed
+- A CodeIgniter 4 app
+- [Shield](https://github.com/codeigniter4/shield) — needed for authentication itself: login/
+  logout, the Users page's group/ban management, and the account this UI's Profile page edits
+- [Settings](https://github.com/codeigniter4/settings) — needed for every autosaving field this
+  UI has (the Settings page itself, plus the per-node Nodes/Databases tables), stored per-context
+  so each node keeps its own values
 - Tabler's CSS/JS under `public/assets/tabler/` — not bundled here, self-host it from its own
   CDN (Apache ECharts, under `public/assets/echarts/`, ships committed inside
   [ad-go/cluster](https://github.com/ad-go/cluster) instead, when that package is installed)
