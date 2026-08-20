@@ -1,0 +1,239 @@
+html, body { height: 100%; margin: 0; }
+/* Found live 2026-08-18: Dashboard (tall - system info + packages table)
+   triggers a vertical scrollbar; Settings/Users (short) don't. Without a
+   reserved gutter, the scrollbar's own width (~15-17px on non-overlay
+   scrollbars) changes the viewport's usable content width page to page,
+   making the whole layout - taskbar included - visibly shift on
+   navigation even though --taskbar-width itself never changes.
+   scrollbar-gutter reserves the space unconditionally; overflow-y is the
+   pre-scrollbar-gutter fallback for browsers that don't support it. */
+html { overflow-y: scroll; scrollbar-gutter: stable; }
+
+/* Layout geometry is owned entirely here, not by Tabler's .navbar-vertical
+   structural CSS (which assumes its own exact markup and fixed/absolute
+   positioning - mixing it into a plain flex layout pushes real page
+   content down). #app-navbar/#app-body/#app-taskbar/#app-content below are
+   plain elements sized only by this stylesheet; Tabler's .nav/.nav-link/
+   .dropdown/.avatar/.btn etc. component classes are still used for
+   styling and work fine without the .navbar-vertical wrapper. */
+.page { min-height: 100vh; display: flex; flex-direction: column; }
+/* Top row: brand box (same width as the taskbar below it) + navbar
+   (everything else). Both children are --navbar-height tall so the whole
+   row's bottom edge - brand included - lines up as one straight boundary,
+   whatever height dragging the navbar resizer sets. */
+#app-topbar { flex: 0 0 auto; display: flex; }
+#app-navbar { flex: 1 1 auto; min-width: 0; height: var(--navbar-height, 56px); display: flex; align-items: center; }
+#app-body { flex: 1 1 auto; display: flex; min-height: 0; }
+/* align-self:flex-start + explicit height/position:sticky (found live
+   2026-08-19, needed for #taskbar-bottom below): without this,
+   #app-taskbar's default align-items:stretch (from #app-body) makes it
+   match #app-content's height exactly - fine for a short page like
+   Users/Settings, but the Dashboard's two 600px ECharts cards stacked
+   make #app-content ~1600px tall, and the taskbar stretched to match
+   pushed anything pinned to ITS bottom (mt-auto) far below the fold,
+   invisible without scrolling the whole page down first.
+   height (NOT max-height, found live 2026-08-19 as a follow-up bug from
+   the max-height version above): max-height only caps growth, it doesn't
+   make a short-content box (just 2 nav links + the bottom block, ~170px)
+   actually BE 100vh tall - #taskbar-bottom's own position:sticky;bottom:0
+   then had nothing to stick to except that same ~170px box, sitting near
+   the TOP of a tall page instead of the visible bottom. An explicit height
+   forces the taskbar to always occupy a full viewport's worth (its own
+   overflow-y:auto scrolls internally if nav content ever exceeds that),
+   so #taskbar-bottom's sticky-to-my-own-bottom now has a real 100vh-tall
+   box to be the bottom OF. calc() subtracts the topbar's own height so
+   the taskbar's bottom edge already lines up with the viewport bottom at
+   scroll position zero, no initial scroll needed to see it land there. */
+#app-taskbar {
+    flex: 0 0 var(--taskbar-width, 220px);
+    width: var(--taskbar-width, 220px);
+    align-self: flex-start;
+    position: sticky;
+    top: 0;
+    height: calc(100vh - var(--navbar-height, 56px));
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+/* Belt-and-suspenders on top of #app-taskbar's own sticky/max-height
+   above: sticks to the bottom of the taskbar's own scroll area even if
+   its nav items alone ever exceed one viewport's height. */
+#taskbar-bottom { position: sticky; bottom: 0; }
+#app-content { flex: 1 1 auto; min-width: 0; overflow-x: hidden; }
+/* Dashboard only, via :has(#net-summary) (that id is unique to
+   dashboard.php's card row) - Layout/app.php wraps every page's content
+   in one shared .container-xl, which is Bootstrap's own max-width +
+   margin-inline:auto, i.e. centered in whatever width #app-content has
+   left after the taskbar. On a wide viewport that visibly centers the
+   Dashboard's cards/charts in the remaining space instead of sitting
+   flush top-left next to the taskbar, which is what was asked for -
+   scoped to just this page (via :has()) rather than changing the shared
+   wrapper for Users/Settings/Profile too, which may want the narrower
+   centered column. */
+#app-content > .container-xl:has(#net-summary) { max-width: none; margin-left: 0; margin-right: 0; }
+.footer { flex: 0 0 auto; }
+
+/* Logo/title - same row as the navbar (#app-topbar above), not the
+   taskbar/sidebar below it. Found live 2026-08-18: previously placed
+   inside #app-taskbar, height-matched to the navbar but still one whole
+   navbar-height lower than the navbar's own icons, in a visibly different
+   row. Width matches --taskbar-width (same var the taskbar/content
+   resizer drags) so its right edge stays aligned with the taskbar column
+   below it too; height matches --navbar-height for the same reason on the
+   other axis, both live-updating with their respective resizers. */
+#taskbar-brand { flex: 0 0 var(--taskbar-width, 220px); width: var(--taskbar-width, 220px); display: flex; align-items: center; height: var(--navbar-height, 56px); box-sizing: border-box; padding: 0 1rem; font-weight: 600; font-size: 1.1rem; text-decoration: none; color: inherit; }
+#taskbar-brand img { max-height: 40px; max-width: 100%; }
+
+/* Tabler's .avatar class is designed for a background-image element (a
+   <span>, as used in Layout/app.php's own navbar avatar) - its fixed
+   width/height with no object-fit stretches a plain <img> to fill the box
+   instead of cropping it, deforming any non-square upload. Profile's own
+   avatar photo is naturally close to square, so cropping it to fill a
+   square box (object-fit: cover) is the right call there. */
+img.avatar { object-fit: cover; }
+
+/* Settings' site logo is typically a wide wordmark, not a square photo -
+   found live 2026-08-18 that reusing .avatar (object-fit: cover, forced
+   square) cropped most of it away instead of shrinking it, exactly the
+   "not a thumbnail" complaint. object-fit: contain shows the whole image,
+   scaled down within the box, same idea as #taskbar-brand img above. */
+.logo-thumb { max-height: 40px; max-width: 160px; width: auto; height: auto; object-fit: contain; }
+
+/* Settings card + Nodes table, both requested smaller/denser 2026-08-19 -
+   form-control-sm/form-select-sm alone (already used) only trims input
+   height/padding, not the label text or table cell font size sitting
+   around them, so this tightens those specifically rather than relying on
+   Bootstrap's size variants alone. */
+.compact-form .form-label { font-size: .8125rem; margin-bottom: .25rem; }
+.compact-form .form-control, .compact-form .form-select { font-size: .8125rem; }
+.compact-form.table-responsive .table { font-size: .8125rem; }
+.compact-form.table-responsive .table th { font-size: .75rem; padding-top: .5rem; padding-bottom: .5rem; }
+.compact-form.table-responsive .table td { padding-top: .35rem; padding-bottom: .35rem; }
+
+/* Dashboard's collapsible System info / Packages card headers - chevron
+   points down (expanded, the default) and rotates to point right when the
+   card is collapsed (app.js toggles aria-expanded, no bootstrap.Collapse
+   instance involved - see app.js for why). */
+.card-collapse-chevron { transition: transform .15s ease; }
+[data-collapse-toggle][aria-expanded="false"] .card-collapse-chevron { transform: rotate(-90deg); }
+
+/* The 6 Dashboard summary cards' icon badge (dashboard.php) - a distinct
+   Tabler bg-*-lt/text-* pair per card, set inline in the view, purely
+   decorative. General rule (also reused as-is by anything else that adds
+   a .dash-card-icon later); #net-summary's own redesign right below
+   overrides sizing/position specifically for these 6 cards. */
+.dash-card-icon { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 6px; flex: 0 0 auto; }
+
+/* Redesigned shorter (requested live 2026-08-19, twice - the first pass
+   only trimmed padding/gaps and wasn't enough of a height cut). The icon
+   is now an absolutely-positioned corner badge instead of a normal-flow
+   element the value/label had to be pushed down below - previously the
+   card's height was padding + icon(28px) + gap + value line + label
+   line; now it's just padding + value line + label line, the icon
+   overlaid in its own reserved corner rather than adding a row. Still
+   visually top-left, per the earlier request that put it there in the
+   first place - just out of flow instead of in it. */
+#net-summary .card-body { position: relative; padding: .625rem .75rem .625rem 2.375rem; min-height: 3.25rem; }
+#net-summary .dash-card-icon { position: absolute; top: .625rem; left: .75rem; width: 22px; height: 22px; }
+#net-summary .dash-card-text { display: flex; flex-direction: column; justify-content: center; min-height: 100%; }
+
+/* Taskbar nav links (Layout/app.php) - same colored-badge convention as
+   .dash-card-icon above, one per link, so the taskbar isn't plain text
+   only (found live 2026-08-18 it had no icons/colors at all, and was
+   entirely empty for a non-superadmin user - see that view's own comment). */
+.nav-link-icon { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 6px; flex: 0 0 auto; }
+.drag-handle { display: inline-flex; cursor: grab; color: var(--tblr-secondary); }
+.drag-handle:active { cursor: grabbing; }
+
+/* GridStack's own item/content wrapper - the card fills it edge to edge
+   (h-100 on .card itself, set in dashboard.php) and scrolls internally
+   rather than growing past the grid cell a drag/resize was set to. */
+.grid-stack-item-content { inset: 0 !important; }
+.grid-stack-item-content > .card { display: flex; flex-direction: column; height: 100%; overflow: auto; }
+
+/* Alpine.js (public/assets/alpine.min.js) hides [x-cloak] elements until it
+   finishes initializing - without this rule, the file-explorer's raw
+   x-show/x-if scaffolding briefly flashes on a slow connection before
+   Alpine hides/renders it properly. */
+[x-cloak] { display: none !important; }
+
+/* File-explorer's mkdir/delete confirm dialogs - reuses Tabler/Bootstrap's
+   .modal-dialog/.modal-content/etc. INNER markup for visuals, but NOT the
+   .modal class itself for the outer wrapper: that class's own stylesheet
+   rule is "display: none" by default (Bootstrap's JS normally toggles it
+   via .show), and Alpine's x-show works by clearing its OWN inline
+   override rather than forcing a value - once cleared, the element falls
+   straight back to that stylesheet default and never actually shows
+   (found live 2026-08-18). A dedicated class with no such default sidesteps
+   the conflict entirely instead of fighting it with more !important. */
+/* Centers its .modal-dialog child via plain flexbox - x-teleport (see
+   dashboard.php) moves this to a direct child of <body>, so position:fixed
+   here really does anchor to the viewport, not some transformed ancestor.
+   Do NOT add "width: 100%" to .modal-dialog here - found live 2026-08-18
+   that doing so made modal-dialog fill the whole flex row, so its own
+   max-width then just clipped it back down on the LEFT edge instead of
+   centering (justify-content:center has no effect on a 100%-wide item).
+   Bootstrap's own .modal-dialog margin: auto plus this flex centering is
+   enough on its own. */
+.explorer-modal { position: fixed; inset: 0; z-index: 1055; overflow-y: auto; display: flex; align-items: center; justify-content: center; padding: 1rem; }
+
+/* No visible dividers anywhere except these two, and only on hover/drag. */
+#app-navbar, #app-taskbar { border: 0 !important; box-shadow: none !important; }
+/* #app-taskbar has no Tabler component class at all on desktop (see its
+   own docblock above), so it just shows the page's own background
+   (--tblr-body-bg). #app-navbar uses Tabler's .navbar class instead,
+   which ships its own (visibly different, near-white) background -
+   found live 2026-08-18: the navbar and taskbar read as two different
+   surfaces stacked on top of each other instead of one continuous shell.
+   Same variable the mobile taskbar drawer below already uses for its own
+   background, so this is consistent with that, not a new color. */
+#app-navbar { background-color: var(--tblr-body-bg, #fff); }
+.resizer { background: transparent; opacity: 0; transition: opacity .15s; flex: 0 0 auto; }
+.resizer:hover, .resizer.dragging { background: var(--tblr-primary); opacity: .35; }
+.resizer-navbar { height: 4px; cursor: row-resize; }
+.resizer-taskbar { width: 4px; cursor: col-resize; }
+
+/* Below md (768px): the taskbar becomes an off-canvas drawer (fixed,
+   slid out via transform) instead of a flex sibling with a persisted
+   pixel width - a resizable sidebar makes no sense on a phone/tablet
+   screen that narrow. #taskbar-toggle (Layout/app.php's burger button,
+   d-md-none so it only exists in the DOM below this same breakpoint) and
+   the app.js listener that toggles body.taskbar-open are what open/close
+   it. Being position:fixed takes it out of #app-body's flex flow
+   entirely, so #app-content already gets the full width for free. */
+@media (max-width: 767.98px) {
+    /* #taskbar-brand's desktop width mirrors --taskbar-width (up to 420px,
+       user-resizable) so it lines up with the taskbar column below it -
+       meaningless once that column becomes an off-canvas drawer down here,
+       and would otherwise crowd the burger/icons out of a narrow phone
+       topbar. Shrinks to fit its own content instead. */
+    #taskbar-brand { flex: 0 1 auto; width: auto; padding: 0 .75rem; }
+    #app-taskbar {
+        position: fixed;
+        top: var(--navbar-height, 56px);
+        left: 0;
+        bottom: 0;
+        width: 260px;
+        max-width: 80vw;
+        transform: translateX(-100%);
+        transition: transform .25s ease;
+        z-index: 1030;
+        box-shadow: 2px 0 12px rgba(0, 0, 0, .15);
+        /* Found live 2026-08-18: with no background of its own, the drawer
+           let the dimmed backdrop (and page content) show through behind
+           the menu text, hurting readability. Tabler's own body background
+           variable, so it's solid and matches the current light/dark theme
+           rather than a hardcoded color. */
+        background-color: var(--tblr-body-bg, #fff);
+    }
+    body.taskbar-open #app-taskbar { transform: translateX(0); }
+    .resizer-taskbar { display: none; }
+    body.taskbar-open::after {
+        content: '';
+        position: fixed;
+        top: var(--navbar-height, 56px);
+        left: 0; right: 0; bottom: 0;
+        background: rgba(0, 0, 0, .5);
+        z-index: 1020;
+    }
+}

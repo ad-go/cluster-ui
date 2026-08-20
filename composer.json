@@ -1,0 +1,27 @@
+{
+    "name": "ad-go/cluster-ui",
+    "description": "Dashboard/Profile/Settings/Users UI layer for a CodeIgniter 4 + Shield + Settings app, built on Tabler.",
+    "license": "MIT",
+    "type": "composer-plugin",
+    "require": {
+        "php": "^8.1",
+        "composer-plugin-api": "^2.0",
+        "codeigniter4/framework": "^4.4",
+        "codeigniter4/shield": "^1.0",
+        "codeigniter4/settings": "^2.0"
+    },
+    "require-dev": {
+        "composer/composer": "^2.0"
+    },
+    "suggest": {
+        "ad-go/cluster": "Powers the Dashboard's network graph, table sunburst, and node activity tree, plus the taskbar's node-switch dropdown - shown only when installed (see Dashboard::networkInfo())."
+    },
+    "autoload": {
+        "psr-4": {
+            "AdGo\\ClusterUi\\Composer\\": "src/Composer/"
+        }
+    },
+    "extra": {
+        "class": "AdGo\\ClusterUi\\Composer\\Plugin"
+    }
+}
